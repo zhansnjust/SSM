@@ -1,6 +1,10 @@
 package controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
@@ -13,6 +17,7 @@ import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 import pojo.User;
 import service.UserService;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.File;
@@ -87,11 +92,26 @@ public class UserController {
 
     @RequestMapping("/upload")
     @ResponseBody
-    public String fileUpload(MultipartFile file, HttpSession session) throws IOException {
-        String fileName = file.getOriginalFilename();
+    public String fileUpload(MultipartFile uploadFile, HttpSession session) throws IOException {
+        String fileName = uploadFile.getOriginalFilename();
         String leftPath = session.getServletContext().getRealPath("/js");
         File f = new File(leftPath, fileName);
-        file.transferTo(f);
+        uploadFile.transferTo(f);
         return "upload ok";
+    }
+
+    @RequestMapping("/down")
+    public ResponseEntity<byte[]> testResponseEntity(HttpSession session) throws IOException {
+        byte[] body = null;
+        ServletContext servletContext = session.getServletContext();
+        InputStream in = session.getServletContext().getResourceAsStream("/js/bootstrap.js");
+        body = new byte[in.available()];
+        in.read(body);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.add("Context-Disposition", "attachment;filename=bootstrap.js");
+        HttpStatus statusConde = HttpStatus.OK;
+        ResponseEntity<byte[]> response = new ResponseEntity<byte[]>(body, headers, statusConde);
+        return response;
     }
 }
