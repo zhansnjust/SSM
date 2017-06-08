@@ -1,6 +1,0 @@
-mapper/UserMapper.class
-controller/UserController.class
-service/UserServiceImpl.class
-service/UserService.class
-pojo/Hotel.class
-pojo/User.class
