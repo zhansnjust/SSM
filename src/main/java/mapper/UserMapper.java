@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * Created by zhans-pc on 2017/5/4.
  */
-
+@Repository
 public interface UserMapper {
     // 查找
     public List<User> selectAll();

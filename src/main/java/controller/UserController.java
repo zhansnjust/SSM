@@ -1,5 +1,11 @@
 package controller;
 
+import mapper.UserMapper;
+import mapper.WhiteMapper;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -14,9 +20,15 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.multipart.commons.CommonsMultipartResolver;
+import org.springframework.web.servlet.ModelAndView;
+import pojo.ExcelChecker;
+import pojo.MtaHotelWhiteList;
 import pojo.User;
 import service.UserService;
+import utils.ExcelCheckerUtils;
+import utils.ExcelView;
 
+import javax.annotation.Resource;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -34,6 +46,9 @@ public class UserController {
     public static String result;
     @Autowired
     UserService userService;
+
+    @Resource
+    WhiteMapper whiteMapper;
 
     @RequestMapping("/findAll")
     public String findAll(ModelMap model, Map<String, Object> map) throws Exception {
@@ -93,25 +108,43 @@ public class UserController {
     @RequestMapping("/upload")
     @ResponseBody
     public String fileUpload(MultipartFile uploadFile, HttpSession session) throws IOException {
-        String fileName = uploadFile.getOriginalFilename();
-        String leftPath = session.getServletContext().getRealPath("/js");
-        File f = new File(leftPath, fileName);
-        uploadFile.transferTo(f);
-        return "upload ok";
-    }
+        String filename=uploadFile.getOriginalFilename();
+        if(!filename.endsWith(".xls")){
+            return "请输入excel -2003及以下版本的文件";
+        }
+        Workbook workbook=new HSSFWorkbook(uploadFile.getInputStream());
+        List<ExcelChecker> list=ExcelCheckerUtils.checkComment(workbook);
+        if (list==null||list.size()==0){
+            List<MtaHotelWhiteList> batchInsert=new ArrayList<MtaHotelWhiteList>();
+            Sheet sheet = workbook.getSheetAt(0);
+            Row row = sheet.getRow(0);
+            int rowNum = sheet.getLastRowNum() + 1;
+            int columnNum = row.getLastCellNum();
+            for (int i = 1; i <rowNum ; i++) {
+                    MtaHotelWhiteList mtaHotelWhiteList=new MtaHotelWhiteList();
+                    mtaHotelWhiteList.setGmtCreate(new Date());
+                    mtaHotelWhiteList.setGmtModified(new Date());
+                    Row tmp=sheet.getRow(i);
+                    Double partnerId=tmp.getCell(0).getNumericCellValue();
+                    Double poiId=tmp.getCell(1).getNumericCellValue();
+                    Double status=tmp.getCell(2).getNumericCellValue();
+                    mtaHotelWhiteList.setPartnerId(partnerId.longValue());
+                    mtaHotelWhiteList.setPoiId(poiId.longValue());
+                    mtaHotelWhiteList.setStatus(status.intValue());
+                    batchInsert.add(mtaHotelWhiteList);
+            }
+            whiteMapper.batchInsert(batchInsert);
+            return "upload ok";
+        }else {
+            String ret="{\"name\":\"李明\",\"age\":19}";
+            return ret;
+        }
 
-    @RequestMapping("/down")
-    public ResponseEntity<byte[]> testResponseEntity(HttpSession session) throws IOException {
-        byte[] body = null;
-        ServletContext servletContext = session.getServletContext();
-        InputStream in = session.getServletContext().getResourceAsStream("/js/bootstrap.js");
-        body = new byte[in.available()];
-        in.read(body);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        headers.add("Context-Disposition", "attachment;filename=bootstrap.js");
-        HttpStatus statusConde = HttpStatus.OK;
-        ResponseEntity<byte[]> response = new ResponseEntity<byte[]>(body, headers, statusConde);
-        return response;
+
+    }
+    @RequestMapping("/download")
+    public ModelAndView downloanExcel(){
+        ExcelView excelView=new ExcelView();
+        return new ModelAndView(excelView);
     }
 }
