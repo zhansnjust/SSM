@@ -1,5 +1,7 @@
 package controller;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import mapper.UserMapper;
 import mapper.WhiteMapper;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -31,6 +33,7 @@ import utils.ExcelView;
 import javax.annotation.Resource;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
@@ -107,44 +110,53 @@ public class UserController {
 
     @RequestMapping("/upload")
     @ResponseBody
-    public String fileUpload(MultipartFile uploadFile, HttpSession session) throws IOException {
-        String filename=uploadFile.getOriginalFilename();
-        if(!filename.endsWith(".xls")){
+    public String fileUpload(MultipartFile uploadFile, HttpServletResponse response) throws IOException {
+        String filename = uploadFile.getOriginalFilename();
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("application/json; charset=utf-8");
+        if (!filename.endsWith(".xls")) {
             return "请输入excel -2003及以下版本的文件";
         }
-        Workbook workbook=new HSSFWorkbook(uploadFile.getInputStream());
-        List<ExcelChecker> list=ExcelCheckerUtils.checkComment(workbook);
-        if (list==null||list.size()==0){
-            List<MtaHotelWhiteList> batchInsert=new ArrayList<MtaHotelWhiteList>();
+        Workbook workbook = new HSSFWorkbook(uploadFile.getInputStream());
+        String ret = "";
+        List<ExcelChecker> list = ExcelCheckerUtils.checkComment(workbook);
+        if (list == null || list.size() == 0) {
+            List<MtaHotelWhiteList> batchInsert = new ArrayList<MtaHotelWhiteList>();
             Sheet sheet = workbook.getSheetAt(0);
             Row row = sheet.getRow(0);
             int rowNum = sheet.getLastRowNum() + 1;
             int columnNum = row.getLastCellNum();
-            for (int i = 1; i <rowNum ; i++) {
-                    MtaHotelWhiteList mtaHotelWhiteList=new MtaHotelWhiteList();
-                    mtaHotelWhiteList.setGmtCreate(new Date());
-                    mtaHotelWhiteList.setGmtModified(new Date());
-                    Row tmp=sheet.getRow(i);
-                    Double partnerId=tmp.getCell(0).getNumericCellValue();
-                    Double poiId=tmp.getCell(1).getNumericCellValue();
-                    Double status=tmp.getCell(2).getNumericCellValue();
-                    mtaHotelWhiteList.setPartnerId(partnerId.longValue());
-                    mtaHotelWhiteList.setPoiId(poiId.longValue());
-                    mtaHotelWhiteList.setStatus(status.intValue());
-                    batchInsert.add(mtaHotelWhiteList);
+            for (int i = 1; i < rowNum; i++) {
+                MtaHotelWhiteList mtaHotelWhiteList = new MtaHotelWhiteList();
+                mtaHotelWhiteList.setGmtCreate(new Date());
+                mtaHotelWhiteList.setGmtModified(new Date());
+                Row tmp = sheet.getRow(i);
+                Double partnerId = tmp.getCell(0).getNumericCellValue();
+                Double poiId = tmp.getCell(1).getNumericCellValue();
+                Double status = tmp.getCell(2).getNumericCellValue();
+                mtaHotelWhiteList.setPartnerId(partnerId.longValue());
+                mtaHotelWhiteList.setPoiId(poiId.longValue());
+                mtaHotelWhiteList.setStatus(status.intValue());
+                batchInsert.add(mtaHotelWhiteList);
             }
             whiteMapper.batchInsert(batchInsert);
-            return "upload ok";
-        }else {
-            String ret="{\"name\":\"李明\",\"age\":19}";
+            Map<String, String> map = new HashMap<String, String>();
+            map.put("msg", "success");
+            ret = JSON.toJSONString(map);
+            workbook.close();
+            return ret;
+        } else {
+            ret = JSON.toJSONString(list);
+            workbook.close();
             return ret;
         }
 
 
     }
+
     @RequestMapping("/download")
-    public ModelAndView downloanExcel(){
-        ExcelView excelView=new ExcelView();
+    public ModelAndView downloanExcel() {
+        ExcelView excelView = new ExcelView();
         return new ModelAndView(excelView);
     }
 }

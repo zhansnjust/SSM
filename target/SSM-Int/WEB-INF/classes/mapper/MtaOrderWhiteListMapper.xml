@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--suppress SqlDialectInspection -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="mapper.WhiteMapper">
+
+    <sql id="base_list">
+        gmt_create,gmt_modified,partner_id,poi_id,status
+    </sql>
+
+    <insert id="batchInsert" parameterType="java.util.List">
+        #         insert into mta_order_occ_whitelist (id, gmt_create,gmt_modified,partner_id,poi_id,status)
+        INSERT INTO mta_order_occ_whitelist(<include refid="base_list"/>)
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.gmtCreate,jdbcType=TIMESTAMP},
+            #{item.gmtModified,jdbcType=TIMESTAMP},
+            #{item.partnerId,jdbcType=BIGINT},
+            #{item.poiId,jdbcType=BIGINT},
+            #{item.status}
+            )
+        </foreach>
+    </insert>
+
+</mapper>

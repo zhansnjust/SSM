@@ -91,6 +91,7 @@
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
             <version>2.5</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -126,39 +127,8 @@
             <artifactId>jstl</artifactId>
             <version>1.2</version>
         </dependency>
-        <dependency>
-            <groupId>SimnetClient</groupId>
-            <artifactId>SimnetClient</artifactId>
-            <version>1.1</version>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <artifactId>junit</artifactId>
-                    <groupId>junit</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
 
 
-        <!-- json配置-->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.5.3</version>
-        </dependency>
-
-        <!--swagger-->
-        <dependency>
-            <groupId>com.mangofactory</groupId>
-            <artifactId>swagger-springmvc</artifactId>
-            <version>1.0.2</version>
-        </dependency>
-        <!--qusrtz-->
-        <dependency>
-            <groupId>org.quartz-scheduler</groupId>
-            <artifactId>quartz</artifactId>
-            <version>2.2.3</version>
-        </dependency>
 
         <dependency>
             <groupId>junit</groupId>
